@@ -1,114 +1,130 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
+import React, {Component} from 'react';
+import {Button, Text, View, Alert} from 'react-native';
+import {RNCamera} from 'react-native-camera';
+import BarcodeMask from 'react-native-barcode-mask';
 
-import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.camera = null;
+    this.barcodeCodes = [];
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+    this.state = {
+      camera: {
+        type: RNCamera.Constants.Type.back,
+        flashMode: RNCamera.Constants.FlashMode.auto,
+      },
+    };
+  }
 
-const App: () => React$Node = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+  onBarCodeRead(scanResult) {
+    Alert.alert(scanResult.data);
+  }
 
-const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
+  async takePicture() {
+    if (this.camera) {
+      const options = {quality: 0.5, base64: true};
+      const data = await this.camera.takePictureAsync(options);
+      console.log(data.uri);
+    }
+  }
+
+  pendingView() {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'lightgreen',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <Text>Waiting</Text>
+      </View>
+    );
+  }
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <RNCamera
+          ref={ref => {
+            this.camera = ref;
+          }}
+          defaultTouchToFocus
+          flashMode={this.state.camera.flashMode}
+          mirrorImage={false}
+          onBarCodeRead={this.onBarCodeRead.bind(this)}
+          onFocusChanged={() => {}}
+          onZoomChanged={() => {}}
+          androidCameraPermissionOptions={{
+            title: 'Permission to use camera',
+            message: 'We need your permission to use your camera',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+          style={styles.preview}
+          type={this.state.camera.type}>
+          <BarcodeMask />
+        </RNCamera>
+        <View style={[styles.overlay, styles.topOverlay]}>
+          <Text style={styles.scanScreenMessage}>Please scan the barcode.</Text>
+        </View>
+        <View style={[styles.overlay, styles.bottomOverlay]}>
+          <Button
+            onPress={() => {
+              console.log('scan clicked');
+            }}
+            style={styles.enterBarcodeManualButton}
+            title="Enter Barcode"
+          />
+        </View>
+      </View>
+    );
+  }
+}
+
+const styles = {
+  container: {
+    flex: 1,
   },
-  engine: {
+  preview: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  overlay: {
     position: 'absolute',
+    padding: 16,
     right: 0,
+    left: 0,
+    alignItems: 'center',
   },
-  body: {
-    backgroundColor: Colors.white,
+  topOverlay: {
+    top: 0,
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  bottomOverlay: {
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
+  enterBarcodeManualButton: {
+    padding: 15,
+    backgroundColor: 'white',
+    borderRadius: 40,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
+  scanScreenMessage: {
+    fontSize: 14,
+    color: 'white',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
+};
 
 export default App;
